@@ -5,8 +5,6 @@ import {
   ReactFlow,
   useNodesState,
   useEdgesState,
-  addEdge,
-  Connection,
   Edge,
   Node,
   Background,
@@ -15,7 +13,8 @@ import {
   Panel,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { GeologicalNode } from '@/components/GeologicalNode';
+import { GeologicalNode, type GeologicalNodeData } from '@/components/GeologicalNode';
+import { type GeologicalUnit } from '@/lib/db/schema';
 import {
   Sheet,
   SheetContent,
@@ -26,6 +25,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Info, Layers, Maximize2, RefreshCw, Map } from 'lucide-react';
 import Link from 'next/link';
+import { ModeToggle } from '@/components/ModeToggle';
 
 const nodeTypes = {
   geological: GeologicalNode,
@@ -37,11 +37,14 @@ const initialEdges: Edge[] = [];
 export default function Dashboard() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [selectedUnit, setSelectedUnit] = useState<any>(null);
+  const [selectedUnit, setSelectedUnit] = useState<GeologicalNodeData | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  const expandedNodeIds = React.useRef<Set<string>>(new Set());
+  const loadingNodeIds = React.useRef<Set<string>>(new Set());
 
-  const showDetail = useCallback((unit: any) => {
+  const showDetail = useCallback((unit: GeologicalNodeData) => {
     setSelectedUnit(unit);
     setIsSheetOpen(true);
   }, []);
@@ -81,8 +84,10 @@ export default function Dashboard() {
   }, [setNodes, showDetail]);
 
   const onNodeClick = useCallback(async (_event: React.MouseEvent, node: Node) => {
-    // Fetch children if not already expanded
-    if (node.data.isExpanded) return;
+    // Fetch children if not already expanded or loading
+    if (node.data.isExpanded || expandedNodeIds.current.has(node.id) || loadingNodeIds.current.has(node.id)) return;
+
+    loadingNodeIds.current.add(node.id);
 
     try {
       const response = await fetch(`/api/units?parentId=${node.id}`);
@@ -117,15 +122,28 @@ export default function Dashboard() {
           animated: true,
         }));
 
-        // Mark current node as expanded
-        setNodes((nds: Node[]) => 
-          nds.map((n: Node) => (n.id === node.id ? { ...n, data: { ...n.data, isExpanded: true } } : n))
-            .concat(newNodes)
-        );
-        setEdges((eds: Edge[]) => eds.concat(newEdges));
+        // Mark current node as expanded and add new nodes
+        setNodes((nds: Node[]) => {
+          const existingIds = new Set(nds.map(n => n.id));
+          const filteredNewNodes = newNodes.filter(n => !existingIds.has(n.id));
+          
+          return nds.map((n: Node) => 
+            n.id === node.id ? { ...n, data: { ...n.data, isExpanded: true } } : n
+          ).concat(filteredNewNodes);
+        });
+
+        // Add new edges, avoiding duplicates
+        setEdges((eds: Edge[]) => {
+          const existingIds = new Set(eds.map(e => e.id));
+          const filteredNewEdges = newEdges.filter(e => !existingIds.has(e.id));
+          return eds.concat(filteredNewEdges);
+        });
       }
+      expandedNodeIds.current.add(node.id);
     } catch (error) {
       console.error('Failed to fetch children:', error);
+    } finally {
+      loadingNodeIds.current.delete(node.id);
     }
   }, [setNodes, setEdges, showDetail]);
 
@@ -141,22 +159,26 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen w-full flex-col bg-zinc-50">
+    <div className="flex h-screen w-full flex-col bg-zinc-50 dark:bg-zinc-950 transition-colors">
       {/* Top Header */}
-      <header className="flex h-14 items-center justify-between border-b bg-white px-6 shadow-sm z-10">
+      <header className="flex h-14 items-center justify-between border-b bg-white dark:bg-zinc-900 px-6 shadow-sm z-10 transition-colors">
         <div className="flex items-center gap-3">
           <Link href="/" className="hover:opacity-80 transition-opacity">
             <ChevronLeft className="h-5 w-5 text-zinc-400" />
           </Link>
           <div className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-blue-600" />
-            <span className="text-lg font-bold tracking-tight text-zinc-900">Geological Navigator</span>
+            <Layers className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <span className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Geological Navigator</span>
           </div>
         </div>
-        <div className="hidden sm:flex items-center gap-4 text-xs font-medium text-zinc-500">
-          <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-blue-500" /> Eons</span>
-          <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-emerald-500" /> Eras</span>
-          <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-amber-500" /> Periods</span>
+        
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 mr-4">
+            <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-blue-500" /> Eons</span>
+            <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-emerald-500" /> Eras</span>
+            <span className="flex items-center gap-1.5"><div className="h-2 w-2 rounded-full bg-amber-500" /> Periods</span>
+          </div>
+          <ModeToggle />
         </div>
       </header>
 
@@ -170,21 +192,21 @@ export default function Dashboard() {
           onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
           fitView
-          className="bg-zinc-50"
+          className="bg-zinc-50 dark:bg-zinc-950"
         >
-          <Background color="#cbd5e1" variant="dots" gap={20} size={1} />
-          <Controls position="bottom-right" className="bg-white border shadow-sm" />
+          <Background color="#cbd5e1" variant="dots" gap={20} size={1} className="dark:opacity-20" />
+          <Controls position="bottom-right" className="bg-white dark:bg-zinc-900 border dark:border-zinc-800 shadow-sm" />
           <MiniMap 
             position="bottom-left" 
-            className="bg-white border rounded-lg shadow-sm"
+            className="bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-lg shadow-sm"
             nodeColor={(n: any) => n.data.color || '#3b82f6'}
           />
-          <Panel position="top-right" className="bg-white/80 backdrop-blur p-3 rounded-xl border border-white shadow-lg m-4 hidden sm:block">
-            <h4 className="flex items-center gap-2 text-xs font-bold text-zinc-900 uppercase tracking-wider mb-2">
+          <Panel position="top-right" className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur p-3 rounded-xl border border-white dark:border-zinc-800 shadow-lg m-4 hidden sm:block">
+            <h4 className="flex items-center gap-2 text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider mb-2">
               <Info className="h-3 w-3 text-blue-500" /> 
               Navigation Tips
             </h4>
-            <ul className="text-[11px] text-zinc-600 space-y-1.5">
+            <ul className="text-[11px] text-zinc-600 dark:text-zinc-400 space-y-1.5">
               <li>• Click a node to expand branches</li>
               <li>• Use mouse wheel to zoom in/out</li>
               <li>• Drag nodes to reorganize view</li>
@@ -204,7 +226,7 @@ export default function Dashboard() {
             >
               {selectedUnit?.type}
             </div>
-            <SheetTitle className="text-3xl font-bold tracking-tight text-zinc-900 border-b pb-4">
+            <SheetTitle className="text-3xl font-bold tracking-tight border-b pb-4">
               {selectedUnit?.label}
             </SheetTitle>
             <div className="flex items-center gap-3 py-4 text-zinc-600">
@@ -213,13 +235,13 @@ export default function Dashboard() {
                   <span className="text-lg font-mono font-medium">{selectedUnit?.startMya} - {selectedUnit?.endMya} MYA</span>
                </div>
             </div>
-            <SheetDescription className="text-base leading-relaxed text-zinc-700 bg-zinc-50 p-6 rounded-2xl border border-zinc-100">
+            <SheetDescription className="text-base leading-relaxed text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900/50 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800">
               {selectedUnit?.description || "A pivotal era in Earth's history, marked by significant geological and biological shifts."}
             </SheetDescription>
           </SheetHeader>
           
-          <div className="mt-12">
-            <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-2 mb-6">
+          {/* <div className="mt-12">
+            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 mb-6">
               <Maximize2 className="h-4 w-4 text-zinc-400" />
               Quick Actions
             </h3>
@@ -233,7 +255,7 @@ export default function Dashboard() {
                   <Info className="h-5 w-5 text-indigo-500" />
                </Button>
             </div>
-          </div>
+          </div> */}
         </SheetContent>
       </Sheet>
     </div>

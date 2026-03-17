@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { ArrowRight, Globe, Layers, Clock, Map } from "lucide-react";
+import { ModeToggle } from "@/components/ModeToggle";
 
 export default function LandingPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-zinc-900 font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
+    <div className="flex min-h-screen flex-col bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans selection:bg-blue-100 dark:selection:bg-blue-900 selection:text-blue-900 dark:selection:text-blue-100 overflow-x-hidden transition-colors">
+      <div className="fixed top-6 right-6 z-50">
+        <ModeToggle />
+      </div>
       {/* Hero Section */}
       <header className="relative flex flex-col items-center justify-center px-6 pt-20 pb-16 text-center md:pt-32 md:pb-24">
         {/* Background Mesh Gradient */}
@@ -17,11 +21,11 @@ export default function LandingPage() {
             <span>Discover Earth's History</span>
           </div>
 
-          <h1 className="mt-8 max-w-4xl text-5xl font-bold tracking-tight text-zinc-900 md:text-7xl">
-            Explore the <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent italic">Deep Time</span> Timeline
+          <h1 className="mt-8 max-w-4xl text-5xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-7xl">
+            Explore the <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent italic">Deep Time</span> Timeline
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-zinc-600 md:text-xl">
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-400 md:text-xl">
             Journey through billions of years of history. From the formation of Earth to the rise and fall of dinosaurs, 
             explore our planet&apos;s geological epochs in an interactive, stunningly designed flow interface.
           </p>
