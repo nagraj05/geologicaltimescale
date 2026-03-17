@@ -1,6 +1,7 @@
 import { Handle, Position } from '@xyflow/react';
 import { cn } from '@/lib/utils';
 import { Clock, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface GeologicalNodeProps {
   data: {
@@ -12,6 +13,7 @@ interface GeologicalNodeProps {
     description?: string;
     isExpanded?: boolean;
     hasChildren?: boolean;
+    onShowDetail?: (unit: any) => void;
   };
   selected?: boolean;
 }
@@ -21,11 +23,11 @@ export function GeologicalNode({ data, selected }: GeologicalNodeProps) {
   
   return (
     <div className={cn(
-      "relative min-w-[180px] rounded-xl border-2 bg-white p-4 shadow-sm transition-all hover:shadow-md",
+      "relative min-w-[200px] rounded-xl border-2 bg-white p-4 shadow-sm transition-all hover:shadow-md",
       selected ? "border-blue-500 ring-2 ring-blue-100 scale-105" : "border-zinc-100",
       isEarth && "border-blue-200 bg-blue-50/30"
     )}>
-      <Handle type="target" position={Position.Top} className="!bg-zinc-300" />
+      <Handle type="target" position={Position.Top} className="bg-zinc-300!" />
       
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
@@ -43,13 +45,26 @@ export function GeologicalNode({ data, selected }: GeologicalNodeProps) {
         
         <h3 className="text-sm font-bold text-zinc-900 line-clamp-1">{data.label}</h3>
         
-        <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 font-medium">
-          <Clock className="h-3 w-3" />
-          <span>{data.startMya}{data.endMya !== null ? ` – ${data.endMya}` : ''} MYA</span>
+        <div className="flex items-center justify-between gap-1.5 text-[11px] text-zinc-500 font-medium">
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-3 w-3" />
+            <span>{data.startMya}{data.endMya !== null ? ` – ${data.endMya}` : ''} MYA</span>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-6 w-6 rounded-md hover:bg-blue-50 hover:text-blue-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onShowDetail?.(data);
+            }}
+          >
+            <Info className="h-3.5 w-3.5" />
+          </Button>
         </div>
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!bg-zinc-300" />
+      <Handle type="source" position={Position.Bottom} className="bg-zinc-300!" />
       
       {/* Visual Indicator of depth */}
       <div 

@@ -1,11 +1,11 @@
 import { db } from "./index";
-import { geologicalUnits } from "./schema";
+import { geologicalUnits, type GeologicalUnit } from "./schema";
 
 async function seed() {
   console.log("Seeding database...");
 
   // Insert Earth (Root)
-  const [earth] = await db
+  const results = await db
     .insert(geologicalUnits)
     .values({
       name: "Earth",
@@ -16,7 +16,9 @@ async function seed() {
       color: "#4CAF50",
       orderIndex: 0,
     })
-    .returning();
+    .returning() as GeologicalUnit[];
+  
+  const earth = results[0];
 
   console.log(`Created root node: ${earth.name} (${earth.id})`);
 
@@ -28,10 +30,10 @@ async function seed() {
     { name: "Phanerozoic", type: "eon", parentId: earth.id, startMya: 541, endMya: 0, color: "#2196F3", orderIndex: 4 },
   ];
 
-  const insertedEons = await db.insert(geologicalUnits).values(eonsData).returning();
+  const insertedEons = await db.insert(geologicalUnits).values(eonsData).returning() as GeologicalUnit[];
   console.log(`Inserted ${insertedEons.length} eons.`);
 
-  const phanerozoic = insertedEons.find((e) => e.name === "Phanerozoic")!;
+  const phanerozoic = insertedEons.find((e: GeologicalUnit) => e.name === "Phanerozoic")!;
 
   // Insert Eras for Phanerozoic
   const erasData = [
@@ -40,12 +42,12 @@ async function seed() {
     { name: "Cenozoic", type: "era", parentId: phanerozoic.id, startMya: 66, endMya: 0, color: "#F44336", orderIndex: 3 },
   ];
 
-  const insertedEras = await db.insert(geologicalUnits).values(erasData).returning();
+  const insertedEras = await db.insert(geologicalUnits).values(erasData).returning() as GeologicalUnit[];
   console.log(`Inserted ${insertedEras.length} eras.`);
 
-  const paleozoic = insertedEras.find((e) => e.name === "Paleozoic")!;
-  const mesozoic = insertedEras.find((e) => e.name === "Mesozoic")!;
-  const cenozoic = insertedEras.find((e) => e.name === "Cenozoic")!;
+  const paleozoic = insertedEras.find((e: GeologicalUnit) => e.name === "Paleozoic")!;
+  const mesozoic = insertedEras.find((e: GeologicalUnit) => e.name === "Mesozoic")!;
+  const cenozoic = insertedEras.find((e: GeologicalUnit) => e.name === "Cenozoic")!;
 
   // Insert Periods for Paleozoic
   const paleozoicPeriods = [
@@ -72,12 +74,12 @@ async function seed() {
   ];
 
   const allPeriodsData = [...paleozoicPeriods, ...mesozoicPeriods, ...cenozoicPeriods];
-  const insertedPeriods = await db.insert(geologicalUnits).values(allPeriodsData).returning();
+  const insertedPeriods = await db.insert(geologicalUnits).values(allPeriodsData).returning() as GeologicalUnit[];
   console.log(`Inserted ${insertedPeriods.length} periods.`);
 
-  const paleogene = insertedPeriods.find((p) => p.name === "Paleogene")!;
-  const neogene = insertedPeriods.find((p) => p.name === "Neogene")!;
-  const quaternary = insertedPeriods.find((p) => p.name === "Quaternary")!;
+  const paleogene = insertedPeriods.find((p: GeologicalUnit) => p.name === "Paleogene")!;
+  const neogene = insertedPeriods.find((p: GeologicalUnit) => p.name === "Neogene")!;
+  const quaternary = insertedPeriods.find((p: GeologicalUnit) => p.name === "Quaternary")!;
 
   // Insert Epochs
   const epochsData = [
@@ -90,7 +92,7 @@ async function seed() {
     { name: "Holocene", type: "epoch", parentId: quaternary.id, startMya: 0.0117, endMya: 0, color: "#5E35B1", orderIndex: 2 },
   ];
 
-  const insertedEpochs = await db.insert(geologicalUnits).values(epochsData).returning();
+  const insertedEpochs = await db.insert(geologicalUnits).values(epochsData).returning() as GeologicalUnit[];
   console.log(`Inserted ${insertedEpochs.length} epochs.`);
 
   console.log("Seeding complete!");

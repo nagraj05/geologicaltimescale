@@ -41,6 +41,11 @@ export default function Dashboard() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const showDetail = useCallback((unit: any) => {
+    setSelectedUnit(unit);
+    setIsSheetOpen(true);
+  }, []);
+
   // Fetch root node (Earth) initially
   useEffect(() => {
     async function fetchRoot() {
@@ -59,7 +64,8 @@ export default function Dashboard() {
               endMya: root.endMya,
               color: root.color,
               description: root.description,
-              hasChildren: true 
+              hasChildren: true,
+              onShowDetail: showDetail
             },
             position: { x: 400, y: 100 },
           };
@@ -72,13 +78,9 @@ export default function Dashboard() {
       }
     }
     fetchRoot();
-  }, [setNodes]);
+  }, [setNodes, showDetail]);
 
   const onNodeClick = useCallback(async (_event: React.MouseEvent, node: Node) => {
-    // Show details in sheet
-    setSelectedUnit(node.data);
-    setIsSheetOpen(true);
-
     // Fetch children if not already expanded
     if (node.data.isExpanded) return;
 
@@ -97,7 +99,8 @@ export default function Dashboard() {
             endMya: child.endMya,
             color: child.color,
             description: child.description,
-            hasChildren: true // We can optimize this by checking in API
+            hasChildren: true,
+            onShowDetail: showDetail
           },
           // Calculate horizontal spacing
           position: { 
@@ -124,7 +127,7 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Failed to fetch children:', error);
     }
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, showDetail]);
 
   if (loading) {
     return (
