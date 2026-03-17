@@ -22,7 +22,7 @@ export default function LandingPage() {
           </div>
 
           <h1 className="mt-8 max-w-4xl text-5xl font-bold tracking-tight text-zinc-900 dark:text-white md:text-7xl">
-            Explore the <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent italic">Deep Time</span> Timeline
+            Explore the <span className="bg-linear-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent italic">Deep Time</span> Timeline
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-400 md:text-xl">

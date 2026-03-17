@@ -14,7 +14,6 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { GeologicalNode, type GeologicalNodeData } from '@/components/GeologicalNode';
-import { type GeologicalUnit } from '@/lib/db/schema';
 import {
   Sheet,
   SheetContent,
@@ -199,7 +198,7 @@ export default function Dashboard() {
           <MiniMap 
             position="bottom-left" 
             className="bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-lg shadow-sm"
-            nodeColor={(n: any) => n.data.color || '#3b82f6'}
+            nodeColor={(n) => (n.data as GeologicalNodeData).color || '#3b82f6'}
           />
           <Panel position="top-right" className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur p-3 rounded-xl border border-white dark:border-zinc-800 shadow-lg m-4 hidden sm:block">
             <h4 className="flex items-center gap-2 text-xs font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider mb-2">
